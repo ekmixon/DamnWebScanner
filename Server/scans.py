@@ -17,7 +17,7 @@ def scan_xss(method, vulns, url, fuzz, cookie, useragent, data):
 		ghost = Ghost()
 		x = ghost.start()
 		result = 0
-		
+
 		# POST
 		if (method == 'POST' and fuzz != ''):
 			inject = dict(data)
@@ -27,11 +27,11 @@ def scan_xss(method, vulns, url, fuzz, cookie, useragent, data):
 			result, resources     = x.fill("form", inject)
 			page, resources       = x.call("form", "submit", expect_loading=True)
 			result, resources     = x.wait_for_alert(1)
-			inject = url + ":" + fuzz + ":" + inject[fuzz]
+			inject = f"{url}:{fuzz}:{inject[fuzz]}"
 
 		# GET
 		if (method == 'GET'):
-			inject                = url.replace(fuzz+"=", fuzz+"="+payload)
+			inject = url.replace(f"{fuzz}=", f"{fuzz}={payload}")
 			page, extra_resources = x.open(inject, headers={'Cookie':cookie}, user_agent=useragent)
 			result, resources     = x.wait_for_alert(1)
 
@@ -40,16 +40,16 @@ def scan_xss(method, vulns, url, fuzz, cookie, useragent, data):
 		if result == '1':
 			print ("\t\t\033[93mXSS Detected\033[0m for ", fuzz, " with the payload :", payload)
 			vulns['xss']  += 1
-			vulns['list'] += 'XSS|TYPE|'+inject+'|DELIMITER|'
+			vulns['list'] += f'XSS|TYPE|{inject}|DELIMITER|'
 		else:
 			print ("\t\t\033[94mXSS Failed \033[0m for ", fuzz, " with the payload :", payload)
 
 	except Exception as e:
-		if "confirm" in str(e) : #or "alert" in str(e):
+		if "confirm" in str(e): #or "alert" in str(e):
 			print ("\t\t\033[93mXSS Detected (False positive ?)\033[0m for ", fuzz, " with the payload :", payload)
-			inject = url + ":" + fuzz + ":" + payload
+			inject = f"{url}:{fuzz}:{payload}"
 			vulns['xss']  += 1
-			vulns['list'] += 'XSS|TYPE|'+inject+'|DELIMITER|'
+			vulns['list'] += f'XSS|TYPE|{inject}|DELIMITER|'
 		else:
 			print ("Error",e)
 			print ("\t\t\033[94mXSS Failed \033[0m for ", fuzz, " with the payload :", payload)
@@ -69,18 +69,17 @@ def scan_sql_error(method, vulns, url, fuzz, cookie, useragent, data):
 		content = requests.post(url, data=inject ,cookies=cookie, headers={'user-agent': useragent} ).text
 
 		# Change the inject to have a nice display in the plugin
-		inject = url + ":" + fuzz + ":" + inject[fuzz]
+		inject = f"{url}:{fuzz}:{inject[fuzz]}"
 
-	# GET
 	else:
-		inject  = url.replace(fuzz+"=", fuzz+"="+payload)
+		inject = url.replace(f"{fuzz}=", f"{fuzz}={payload}")
 		content = requests.get(inject, cookies=cookie, headers={'user-agent': useragent} ).text
 
 	# Check result
 	if "SQLSTATE[HY000]" in content or "Warning: SQLite3:" in content or "You have an error in your SQL syntax" in content:
 		print ("\t\t\033[93mSQLi Detected \033[0m for ", fuzz, " with the payload :", payload)
 		vulns['sql']  += 1
-		vulns['list'] += 'E_SQLi|TYPE|'+inject+'|DELIMITER|'
+		vulns['list'] += f'E_SQLi|TYPE|{inject}|DELIMITER|'
 	else:
 		print ("\t\t\033[94mSQLi Failed \033[0m for ", fuzz, " with the payload :", payload)
 
@@ -108,12 +107,11 @@ def scan_sql_blind_time(method, vulns, url, fuzz, cookie, useragent, data):
 			content = requests.post(url, data=inject ,cookies=cookie, headers={'user-agent': useragent} ).text
 
 			# Change the inject to have a nice display in the plugin
-			inject = url + ":" + fuzz + ":" + inject[fuzz]
+			inject = f"{url}:{fuzz}:{inject[fuzz]}"
 
-		# GET
 		else:
 			# Do a request and check the response time
-			inject  = url.replace(fuzz+"=", fuzz+"="+payload)
+			inject = url.replace(f"{fuzz}=", f"{fuzz}={payload}")
 			time1   = datetime.datetime.now()
 			content = requests.get(inject, cookies=cookie, headers={'user-agent': useragent} ).text
 
@@ -124,7 +122,7 @@ def scan_sql_blind_time(method, vulns, url, fuzz, cookie, useragent, data):
 		if diff > 2:
 			print ("\t\t\033[93mTime Based SQLi (", name ,") Detected \033[0m for ", fuzz, " with the payload :", payload)
 			vulns['sql']  += 1
-			vulns['list'] += 'B_SQLi|TYPE|'+inject+'|DELIMITER|'
+			vulns['list'] += f'B_SQLi|TYPE|{inject}|DELIMITER|'
 			return
 
 		else:
@@ -145,18 +143,17 @@ def scan_lfi(method, vulns, url, fuzz, cookie, useragent, data):
 		content = requests.post(url, data=inject ,cookies=cookie, headers={'user-agent': useragent} ).text
 
 		# Change the inject to have a nice display in the plugin
-		inject = url + ":" + fuzz + ":" + inject[fuzz]
+		inject = f"{url}:{fuzz}:{inject[fuzz]}"
 
-	# GET
 	else:
-		inject  = re.sub(fuzz+"="+"(.[^&]*)", fuzz+"="+payload , url)
+		inject = re.sub(f"{fuzz}=(.[^&]*)", f"{fuzz}={payload}", url)
 		content = requests.get(inject, cookies=cookie, headers={'user-agent': useragent} ).text
 
 	# Check for a common string in /etc/passwd
 	if "root:x:0:0:root:/root:/bin/bash" in content:
 		print ("\t\t\033[93mLFI Detected \033[0m for ", fuzz, " with the payload :", payload)
 		vulns['lfi']  += 1
-		vulns['list'] += 'LFI|TYPE|'+inject+'|DELIMITER|'
+		vulns['list'] += f'LFI|TYPE|{inject}|DELIMITER|'
 	else:
 		print ("\t\t\033[94mLFI Failed \033[0m for ", fuzz, " with the payload :", payload)
 
@@ -191,12 +188,11 @@ def scan_rce(method, vulns, url, fuzz, cookie, useragent, data):
 		content = requests.post(url, data=inject ,cookies=cookie, headers={'user-agent': useragent} ).text
 
 		# Change the inject to have a nice display in the plugin
-		inject = url + ":" + fuzz + ":" + inject[fuzz]
+		inject = f"{url}:{fuzz}:{inject[fuzz]}"
 
-	# GET
 	else:
 		# Do a request and check the response time
-		inject  = url.replace(fuzz+"=", fuzz+"="+payload_get)
+		inject = url.replace(f"{fuzz}=", f"{fuzz}={payload_get}")
 		time1   = datetime.datetime.now()
 		content = requests.get(inject, cookies=cookie, headers={'user-agent': useragent}).text
 
@@ -208,7 +204,7 @@ def scan_rce(method, vulns, url, fuzz, cookie, useragent, data):
 	if diff > 2:
 		print ("\t\t\033[93mRCE Detected \033[0m for ", fuzz, " with the payload :", payload_get)
 		vulns['rce']  += 1
-		vulns['list'] += 'RCE|TYPE|'+inject+'|DELIMITER|'
+		vulns['list'] += f'RCE|TYPE|{inject}|DELIMITER|'
 
 	else:
 		print ("\t\t\033[94mRCE Failed \033[0m for ", fuzz, " with the payload :", payload_post)

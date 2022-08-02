@@ -52,12 +52,11 @@ def index():
 		for cookie in args['cookies'].split('\n'):
 
 			c = cookie.split('|')
-			if c != '' and c != None:
-				if len(c) != 1:
-					name  = str(c[0]).replace('name:','')
-					value = str(c[1]).replace('value:','')
-					cookies_requests[name] = value
-					cookies_ghost += " "+cookie.replace('name:','').replace('value:','=').replace('|','') + ";"
+			if c not in ['', None] and len(c) != 1:
+				name  = str(c[0]).replace('name:','')
+				value = str(c[1]).replace('value:','')
+				cookies_requests[name] = value
+				cookies_ghost += " "+cookie.replace('name:','').replace('value:','=').replace('|','') + ";"
 
 		# Parse GET data (in url)
 		params  = url.split('?')[1]
@@ -74,23 +73,21 @@ def index():
 		cookies_ghost    = "" #string header
 		for cookie in args['cookies'].split(';'):
 			c = cookie.split('=')
-			if c != '' and c != None:
-				if len(c) != 1:
-					name  = c[0]
-					value = c[1]
-					cookies_requests[name] = value
-					cookies_ghost += " "+cookie.replace('name:','').replace('value:','=').replace('|','') + ";"
+			if c not in ['', None] and len(c) != 1:
+				name  = c[0]
+				value = c[1]
+				cookies_requests[name] = value
+				cookies_ghost += " "+cookie.replace('name:','').replace('value:','=').replace('|','') + ";"
 
 
 		# Parse POST data (in data parameter)
 		data_requests = {}
 		for post_data in data.split('|'):
 			d = post_data.split(':')
-			if d != '' and d != None:
-				if len(d) != 1:
-					name  = str(d[0])
-					value = str(d[1])
-					data_requests[name] = value
+			if d not in ['', None] and len(d) != 1:
+				name  = str(d[0])
+				value = str(d[1])
+				data_requests[name] = value
 
 		# Convert dict(data_requests) to list(matches)
 		matches = data_requests.keys()
